@@ -79,7 +79,7 @@ int read_signature(const char *file_path, VirusSignature *vs)
     return RS_SUCCESS; // 0
 }
 
-//ÑFS - Calculate File Size
+//CFS - Calculate File Size
 enum Error_Codes_CFS
 {
     CFS_SUCCESS, // All good
@@ -176,12 +176,27 @@ int scan_file(const char *file_path, VirusSignature *vs)
     size_t element_size, elements_number, file_size;
     int result, MZ_flag = 0, flag = 0;
     FILE *file = fopen(file_path, "rb");
+    uint16_t MZ1 = 0, MZ2 = 0;
 
     if (file == NULL)
     {
         return SF_FILE_FOPEN_ERROR; // 3
     }
 
+    if (fread(&MZ1, sizeof(uint16_t), 1, file) != 1)
+    {
+        fclose(file);
+        return SF_MZ_FREAD_ERROR; // 4
+    }
+    MZ2 = (('Z' << 8) | 'M');
+    if (MZ1 == MZ2)
+    {
+        MZ_flag = 1;
+    }
+    /*
+    printf("%04X\n",MZ1);
+    printf("%04X\n",MZ2);
+    printf("%d\n",flag);
     if (fread(MZ,sizeof(MZ[0]),sizeof(MZ)/sizeof(MZ[0]),file) != sizeof(MZ)/sizeof(MZ[0]))
     {
         fclose(file);
@@ -192,44 +207,44 @@ int scan_file(const char *file_path, VirusSignature *vs)
     {
         MZ_flag = 1;
     }
-
+    */
     if (MZ_flag == 0)
     {
         fclose(file);
         return SF_NOT_PE; // 5
     }
-
+    
     result = calculate_file_size(file_path, &file_size);
-    if (result != CFS_SUCCESS)
+    if (result != CFS_SUCCESS) // case 0
     {
         switch (result)
         {
-            case CFS_NULL_FILE_PATH_POINTER:
+            case CFS_NULL_FILE_PATH_POINTER: // case 1
             {
                 fclose(file);
                 return SF_CFS_NULL_PATH_POINTER; // 6
             }
-            case CFS_NULL_FILE_SIZE_POINTER:
+            case CFS_NULL_FILE_SIZE_POINTER: // case 2
             {
                 fclose(file);
                 return SF_CFS_NULL_FILE_SIZE_POINTER; // 7
             }
-            case CFS_FILE_FOPEN_ERROR:
+            case CFS_FILE_FOPEN_ERROR: // case 3
             {
                 fclose(file);
                 return SF_CFS_FILE_FOPEN_ERROR; // 8
             }
-            case CFS_END_FSEEK_ERROR:
+            case CFS_END_FSEEK_ERROR: // case 4
             {
                 fclose(file);
                 return SF_CFS_END_FSEEK_ERROR; // 9
             }
-            case CFS_SIZE_FTELL_ERROR:
+            case CFS_SIZE_FTELL_ERROR: // case 5
             {
                 fclose(file);
                 return SF_CFS_SIZE_FTELL_ERROR; // 10
             }
-            case CFS_FILE_FCLOSE_ERROR:
+            case CFS_FILE_FCLOSE_ERROR: // case 6
             {
                 fclose(file);
                 return SF_CFS_FILE_FCLOSE_ERROR; // 11
@@ -242,6 +257,10 @@ int scan_file(const char *file_path, VirusSignature *vs)
             }
         }
     }
+    // Proverka razmerov filov -> uncomment to check file sizes
+    // printf("%zu\n\n", vs->offset + (sizeof(vs->signature) / sizeof(vs->signature[0])));
+    // printf("%zu", file_size);
+
     // offset + (length of signatire) > file_size -> file is safe
     if (vs->offset + (sizeof(vs->signature) / sizeof(vs->signature[0])) > file_size)
     {
@@ -571,5 +590,5 @@ int main() {
         return MAIN_SF_ERROR; // 10
     }
 
-    return MAIN_SUCCESS;
+    return MAIN_SUCCESS; // 0
 }
