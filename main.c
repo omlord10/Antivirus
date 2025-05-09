@@ -15,7 +15,6 @@ typedef struct
     char virus_name[MAX_VIRUS_NAME_LENGTH];
 } VirusSignature;
 
-
 // Oshibka nazivayetsya: RS - read signature - func,
 // VIRABLE_FUNCTION_ERROR; Example: Error with variable OFFSET in func FSCANF ->
 // -> ERROR name will be RS_OFFSET_FSCANF_ERROR
@@ -172,48 +171,38 @@ int scan_file(const char *file_path, VirusSignature *vs)
         return SF_NULL_VSTRUCT_POINTER; // 2
     }
 
-    unsigned char buffer[MAX_SIGNATURE_LENGTH], MZ[2];
+    unsigned char buffer[MAX_SIGNATURE_LENGTH]; //add MZ[2] if you want another way to check MZ bytes -> uncomment code below
     size_t element_size, elements_number, file_size;
-    int result, MZ_flag = 0, flag = 0;
-    FILE *file = fopen(file_path, "rb");
+    int result, MZ_flag = 0, flag; // MZ_flag -> MZ, flag -> memcmp
+    FILE *file;
     uint16_t MZ1 = 0, MZ2 = 0;
 
+    file = fopen(file_path, "rb");
     if (file == NULL)
     {
         return SF_FILE_FOPEN_ERROR; // 3
     }
-
+    // snachala proverka na MZ -> zatem na file_size -> zatem na signaturu
     if (fread(&MZ1, sizeof(uint16_t), 1, file) != 1)
     {
         fclose(file);
         return SF_MZ_FREAD_ERROR; // 4
     }
+
     MZ2 = (('Z' << 8) | 'M');
     if (MZ1 == MZ2)
     {
         MZ_flag = 1;
     }
-    /*
-    printf("%04X\n",MZ1);
-    printf("%04X\n",MZ2);
-    printf("%d\n",flag);
-    if (fread(MZ,sizeof(MZ[0]),sizeof(MZ)/sizeof(MZ[0]),file) != sizeof(MZ)/sizeof(MZ[0]))
-    {
-        fclose(file);
-        return SF_MZ_FREAD_ERROR; // 4
-    }
-
-    if ((MZ[0] == 'M') && (MZ[1] == 'Z'))
-    {
-        MZ_flag = 1;
-    }
-    */
+    //printf("%04X\n",MZ1);
+    //printf("%04X\n",MZ2);
+    //printf("%d\n",flag);
     if (MZ_flag == 0)
     {
         fclose(file);
         return SF_NOT_PE; // 5
     }
-    
+
     result = calculate_file_size(file_path, &file_size);
     if (result != CFS_SUCCESS) // case 0
     {
@@ -283,11 +272,15 @@ int scan_file(const char *file_path, VirusSignature *vs)
         return SF_BUFFER_FREAD_ERROR; // 14
     }
 
-    result = memcmp(buffer, vs->signature, elements_number);
-    // if equal -> result should be 0 -> virus in file -> file is not safe
-    if (result == 0)
+
+    // if equal -> memcmp should be 0 -> virus in file -> file is not safe
+    if (memcmp(buffer, vs->signature, elements_number) == 0)
     {
         flag = 1;
+    }
+    else
+    {
+        flag = 0;
     }
 
     if (fclose(file) != 0)
@@ -295,7 +288,7 @@ int scan_file(const char *file_path, VirusSignature *vs)
         fclose(file);
         return SF_FILE_FCLOSE_ERROR; // 15
     }
-
+    // if flag = 1 -> virus in file; else if flag = 0 -> virus not in file -> SF_SUCCESS
     if (flag == 1)
     {
         return SF_VIRUS_DETECTED; // 16
@@ -325,7 +318,6 @@ int main() {
     char target_path[MAX_FILE_SYSTEM_ADRESS_SIZE];
     int result;
     const char *message;
-    size_t i;
 
     message = "Welcome to the virus scanner program!\n\n"
               "This program scans files on your computer to check for viruses.\n"
