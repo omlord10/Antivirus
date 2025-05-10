@@ -1,4 +1,3 @@
-\mainpage
 # 🛡️ Simple Antivirus (C Language)
 
 ## Overview
