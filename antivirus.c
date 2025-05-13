@@ -700,8 +700,8 @@ int main()
  * }
  * @endcode
  *
- * @param file_path Path to the file containing the signature.
- * @param vs Pointer to the VirusSignature structure to be filled.
+ * @param [in] file_path Path to the file containing the signature.
+ * @param [out] vs Pointer to the VirusSignature structure to be filled.
  * @return Error code from @ref Error_Codes_RS.
  */
 int read_signature(const char *file_path, VirusSignature *vs)
@@ -759,14 +759,14 @@ int read_signature(const char *file_path, VirusSignature *vs)
  * This function evaluates the file at the given path to determine if it is
  * executable. It sets the provided flag to indicate the result of the check.
  *
- * @param file_path The path to the file to be checked for execution permissions.
- * @param exe_flag A pointer to an integer that will be updated to 1 if the file
+ * @param [in] file_path The path to the file to be checked for execution permissions.
+ * @param [out] exe_flag A pointer to an integer that will be updated to 1 if the file
  *                 is executable, or 0 if it is not.
  *
  * @note This function is useful for validating file executable permission before attempting
  *       to scan a file.
  *
- * @return Error code from @ref Error_Codes_EXE.
+ * @return Errors code from @ref Error_Codes_EXE.
  */
 int is_exec(const char *file_path, int *exe_flag)
 {
@@ -807,9 +807,6 @@ int is_exec(const char *file_path, int *exe_flag)
     {
         MZ_flag = 1; //
     }
-//    printf("%04X\n",MZ1);
-//    printf("%04X\n",MZ2);
-//    printf("%d\n",MZ_flag);
 
     *exe_flag = MZ_flag;
     return EXE_SUCCESS; // 0
@@ -835,8 +832,8 @@ int is_exec(const char *file_path, int *exe_flag)
  * }
  * @endcode
  *
- * @param file_path Path to the file.
- * @param file_size Pointer to a variable to store the resulting file size.
+ * @param [in] file_path Path to the file.
+ * @param [out] file_size Pointer to a variable to store the resulting file size.
  * @return Error code from @ref Error_Codes_CFS.
  */
 int calculate_file_size(const char *file_path, size_t *file_size)
@@ -885,45 +882,30 @@ int calculate_file_size(const char *file_path, size_t *file_size)
 }
 
 /**
- * @brief Scans a file for a known virus signature.
+ * @brief Scans a file for a virus signature at a specific offset.
  *
- * This function checks whether the given file is a PE (Portable Executable) file,
- * verifies that the file is large enough to contain the virus signature at the specified offset,
- * and compares the contents of the file at that offset to the known virus signature.
- *
+ * This function reads the file at the specified offset from the VirusSignature structure
+ * and compares the content against the known virus signature. The result is returned
+ * via the virus_flag parameter (1 = infected, 0 = clean).
+
  * Example usage:
  * @code
  * VirusSignature vs;
- * int rs_result, sf_result;
+ * int virus_found = 0;
  *
- * rs_result = read_signature("signature.txt", &vs);
- * if (rs_result != RS_SUCCESS)
- * {
- *     printf("Error reading signature: %d\n", rs_result);
+ * if (scan_file("target.exe", &vs, &virus_found) != SF_SUCCESS) {
+ *     // Handle error
  * }
  *
- * int sf_result = scan_file("target.exe", &vs);
- * switch (sf_result)
- * {
- *     case SF_SUCCESS:
- *     {
- *         printf("The file is clean.\n");
- *         break;
- *     }
- *     case SF_VIRUS_DETECTED:
- *     {
- *         printf("Virus detected!\n");
- *         break;
- *     }
- *     default:
- *     {
- *         printf("Error during scan: %d\n", sf_result);
- *     }
+ * if (virus_found) {
+ *     printf("Virus detected: %s\n", vs.name);
+ * }
  * @endcode
  *
- * @param file_path Path to the file to scan.
- * @param vs Pointer to a VirusSignature structure containing the known signature.
- * @return Error code from @ref Error_Codes_SF.
+ * @param [in] file_path Path to the file to scan (must not be NULL)
+ * @param [in] vs VirusSignature containing signature, offset and name (must not be NULL)
+ * @param [out] virus_flag Output flag for detection result (must not be NULL)
+ * @return SF_SUCCESS (0) on success, error code from @ref Error_Codes_SF on failure
  */
 int scan_file(const char *file_path, VirusSignature *vs, int *virus_flag)
 {
