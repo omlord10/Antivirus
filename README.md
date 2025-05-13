@@ -11,8 +11,8 @@ the target file to detect potential infections.
 ## 📁 Project Structure
 
 - `antivirus.c` - Main entry point of the application.
-  - `main` - The main function scans files for virus signatures, checks results, and reports if they're infected or safe.
-  - `is_exec` - Verifies if a file is executable or not.
+  - `main()` - The main function scans files for virus signatures, checks results, and reports if they're infected or safe.
+  - `is_exec()` - Verifies if a file is executable or not.
   - `read_signature()` - Reads the virus signature from a text file.
   - `scan_file()` - Checks the specified file for the presence of the signature.
   - `calculate_file_size()` - Determines the file size to ensure a valid offset.
