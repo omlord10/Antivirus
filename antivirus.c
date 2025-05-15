@@ -9,16 +9,55 @@
  * @brief Maximum length (in bytes) of a virus signature.
  */
 #define MAX_SIGNATURE_LENGTH 8
+
 /**
  * @def MAX_VIRUS_NAME_LENGTH
  * @brief Maximum length (in characters) of a virus name string.
  */
 #define MAX_VIRUS_NAME_LENGTH 256
+
 /**
- * @def MAX_FILE_SYSTEM_ADRESS_SIZE
+ * @def MAX_FS_ADRESS_SIZE
  * @brief Maximum length (in characters) of a file system path or address.
  */
-#define MAX_FILE_SYSTEM_ADRESS_SIZE 256
+#define MAX_FS_ADRESS_SIZE 256
+/**
+ * @def STR2
+ * @brief Converts a token to a string literal.
+ *
+ * This macro converts its argument into a string literal without expanding it first.
+ * It is typically used as an internal helper for other macros like STR.
+ *
+ * @param x The token to be stringified.
+ *
+ * @code
+ * // Example:
+ * STR2(HELLO) // Expands to "HELLO"
+ * #define VALUE 100
+ * STR2(VALUE) // Expands to "VALUE", not "100"
+ * @endcode
+ */
+#define STR2(x) #x
+
+/**
+ * @def STR
+ * @brief Expands a macro and converts the result to a string literal.
+ *
+ * This macro expands its argument if it is a macro, then converts the result to a string literal.
+ * Useful when you want the value of a macro as a string (e.g., for printing or generating format strings).
+ *
+ * @param x The macro or token to expand and stringify.
+ *
+ * @code
+ * // Example:
+ * #define VALUE 100
+ * STR(VALUE) // Expands to "100"
+ *
+ * #define NAME John
+ * STR(NAME) // Expands to "John"
+ * @endcode
+ */
+#define STR(x) STR2(x)
 
 
 /**
@@ -294,11 +333,12 @@ int main()
 {
     // Declare all the variables:
     VirusSignature vs;
-    char sign_path[MAX_FILE_SYSTEM_ADRESS_SIZE];
-    char target_path[MAX_FILE_SYSTEM_ADRESS_SIZE];
+    char sign_path[MAX_FS_ADRESS_SIZE];
+    char target_path[MAX_FS_ADRESS_SIZE];
     int result, exe_flag = 0, virus_flag = 0;
     const char *message;
     size_t file_size = 0;
+    int ch;
 
     message = "Welcome to the virus scanner program!\n\n"
               "This program scans files on your computer to check for viruses.\n"
@@ -313,37 +353,42 @@ int main()
 
     if (printf("%s",message) < 0)
     {
-        printf("Error in function:\n"
+        printf("\nError in function:\n"
                "int printf(const char *restrict format, ...);\n"
                "Desciption: Failed to output message\n");
         return MAIN_SIGN_PRINTF_ERROR; // 1
     }
 
-    if (scanf("%s",sign_path) != 1)
+    if (scanf("%" STR(MAX_FS_ADRESS_SIZE) "[^\n]", sign_path) != 1)
     {
-        printf("Error in function:\n"
+        printf("\nError in function:\n"
                "int scanf(const char *restrict format, ...);\n"
                "Desciption: Failed to reading signature file path\n");
         return MAIN_SIGN_SCANF_ERROR; // 2
     }
 
+    while ((ch = getchar()) != '\n' && ch != EOF);
+
     message = "\nEnter path to target file: \n"
               "Example: target.exe OR C:\\Bin1\\Bin2\\target.exe\n";
+
     if (printf("%s", message) < 0)
     {
-       printf("Error in function:\n"
+       printf("\nError in function:\n"
               "int printf(const char *restrict format, ...);\n"
               "Description: Failed to output message\n");
        return MAIN_TARG_PRINTF_ERROR; // 3
     }
 
-    if (scanf("%s",target_path) != 1)
+    if (scanf("%" STR(MAX_FS_ADRESS_SIZE) "[^\n]", target_path) != 1)
     {
-        printf("Error in function:\n"
+        printf("\nError in function:\n"
                "int scanf(const char *restrict format, ...);\n"
                "Description: Failed to reading signature file path\n");
         return MAIN_TARG_SCANF_ERROR; // 4
     }
+
+    while ((ch = getchar()) != '\n' && ch != EOF);
 
     // 1) MZ check (is_exec) -> 2) file size (CFS) -> 3) signatura (SF)
     result = is_exec(target_path, &exe_flag);
@@ -353,7 +398,7 @@ int main()
         {
             if (printf("\nAll OK, FILE(%s) is safe", target_path) < 0)
             {
-                printf("Error in function:\n"
+                printf("\nError in function:\n"
                        "int printf(const char *restrict format, ...);\n"
                        "Description: Failed to output message\n");
                 return MAIN_NOT_PE_PRINTF_ERROR; // 5
@@ -367,42 +412,42 @@ int main()
         {
             case EXE_NULL_FILE_PATH_POINTER: // case 1
             {
-                message = "Error in variable:\n"
+                message = "\nError in variable:\n"
                           "const char *file_path;\n"
                           "Description: Signature file path pointer is NULL\n";
                 break;
             }
             case EXE_NULL_EFLAG_POINTER: // case 2
             {
-                message = "Error in variable:\n"
+                message = "\nError in variable:\n"
                           "int *exe_flag;\n"
                           "Description: Exe flag pointer is NULL\n";
                 break;
             }
             case EXE_FILE_FOPEN_ERROR: // case 3
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "FILE *fopen(const char *restrict pathname, const char *restrict mode);\n"
                           "Description: Failed to open target file\n";
                 break;
             }
             case EXE_BUFFER_FREAD_ERROR: // case 4
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "size_t fread( void * ptrvoid, size_t size, size_t count, FILE * filestream);"
                           "Description: Failed to read bytes in target file\n";
                 break;
             }
             case EXE_FILE_FCLOSE_ERROR: // case 5
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "int fclose(FILE *stream);\n"
                           "Description: Failed to close signature file\n";
                 break;
             }
             default:
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "int is_exec(const char *file_path, int *exe_flag)\n"
                           "Description: Unknown error occurred while reading signature\n";
                 break;
@@ -411,7 +456,7 @@ int main()
 
         if (printf("%s", message) < 0)
         {
-            printf("Error in function:\n"
+            printf("\nError in function:\n"
                    "int printf(const char *restrict format, ...);\n"
                    "Desciption: Failed to output message\n");
             return MAIN_EXEC_PRINTF_ERROR; // 6
@@ -427,56 +472,56 @@ int main()
         {
             case RS_NULL_FILE_PATH_POINTER: // case 1
             {
-                message = "Error in variable:\n"
+                message = "\nError in variable:\n"
                           "const char *file_path;\n"
                           "Description: Signature file path pointer is NULL\n";
                 break;
             }
             case RS_NULL_VSTRUCT_POINTER: // case 2
                 {
-                    message = "Error in variable:\n"
+                    message = "\nError in variable:\n"
                               "VirusSignature *vs;\n"
                               "Description: Virus structure pointer is NULL\n";
                     break;
                 }
             case RS_FILE_FOPEN_ERROR: // case 3
                 {
-                    message = "Error in function:\n"
+                    message = "\nError in function:\n"
                               "FILE *fopen(const char *restrict pathname, const char *restrict mode);\n"
                               "Description: Failed to open signature file\n";
                     break;
                 }
             case RS_SIGNATURE_FSCANF_ERROR: // case 4
                 {
-                    message = "Error in function:\n"
+                    message = "\nError in function:\n"
                               "int fscanf(FILE *restrict stream, const char *restrict format, ...);\n"
                               "Description: Failed to read signature from file\n";
                     break;
                 }
             case RS_OFFSET_FSCANF_ERROR: // case 5
                 {
-                    message = "Error in function:\n"
+                    message = "\nError in function:\n"
                               "int fscanf(FILE *restrict stream, const char *restrict format, ...);\n"
                               "Description: Failed to read offset from file\n";
                     break;
                 }
             case RS_VNAME_FSCANF_ERROR: // case 6
                 {
-                    message = "Error in function:\n"
+                    message = "\nError in function:\n"
                               "int fscanf(FILE *restrict stream, const char *restrict format, ...);\n"
                               "Description: Failed to read virus name from file\n";
                     break;
                 }
             case RS_FILE_FCLOSE_ERROR: // case 7
                 {
-                    message = "Error in function:\n"
+                    message = "\nError in function:\n"
                               "int fclose(FILE *stream);\n"
                               "Description: Failed to close signature file\n";
                     break;
                 }
             default:
                 {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "int read_signature(const char *file_path, VirusSignature *vs)\n"
                           "Description: Unknown error occurred while reading signature\n";
                 break;
@@ -485,7 +530,7 @@ int main()
 
         if (printf("%s", message) < 0)
         {
-            printf("Error in function:\n"
+            printf("\nError in function:\n"
                    "int printf(const char *restrict format, ...);\n"
                    "Desciption: Failed to output message\n");
             return MAIN_RS_PRINTF_ERROR; // 8
@@ -502,7 +547,7 @@ int main()
         {
             if (printf("\nAll OK, FILE(%s) is safe", target_path) < 0)
             {
-                printf("Error in function:\n"
+                printf("\nError in function:\n"
                        "int printf(const char *restrict format, ...);\n"
                        "Description: Failed to output message\n");
                 return MAIN_SMALL_SIZE_PRINTF_ERROR; // 10
@@ -516,49 +561,49 @@ int main()
         {
             case CFS_NULL_FILE_PATH_POINTER: // case 1
             {
-                message = "Error in variable:\n"
+                message = "\nError in variable:\n"
                           "const char *file_path;\n"
                           "Description: Target file path pointer is NULL\n";
                 break;
             }
             case CFS_NULL_FILE_SIZE_POINTER: // case 2
             {
-                message = "Error in variable:\n"
+                message = "\nError in variable:\n"
                           "size_t *file_size;\n"
                           "Description: File_size pointer is NULL\n";
                 break;
             }
             case CFS_FILE_FOPEN_ERROR: // case 3
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "FILE *fopen(const char *restrict pathname, const char *restrict mode);\n"
                           "Description: Failed to open target file\n";
                 break;
             }
             case CFS_END_FSEEK_ERROR: // case 4
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "int fseek(FILE *stream, long offset, int whence);\n"
                           "Description: Failed to set END position in file for size calculation\n";
                 break;
             }
             case CFS_SIZE_FTELL_ERROR: // case 5
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "long ftell(FILE *stream);\n"
                           "Description: Failed to tell file position for size calculation\n";
                 break;
             }
             case CFS_FILE_FCLOSE_ERROR: // case 6
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "int fclose(FILE *stream);\n"
                           "Description: Failed to close file after size calculation\n";
                 break;
             }
             default:
             {
-                message = "Error in function:"
+                message = "\nError in function:"
                           "int calculate_file_size(const char *file_path, size_t *file_size);\n"
                           "Description: Unknown error occurred while calculating file size\n";
                 break;
@@ -567,7 +612,7 @@ int main()
 
         if (printf("%s", message) < 0)
         {
-            printf("Error in function:\n"
+            printf("\nError in function:\n"
                    "int printf(const char *restrict format, ...);\n"
                    "Desciption: Failed to output message\n");
             return MAIN_CFS_PRINTF_ERROR; // 11
@@ -583,7 +628,7 @@ int main()
         {
             if (printf("\nAll OK, FILE(%s) is safe", target_path) < 0)
             {
-                printf("Error in function:\n"
+                printf("\nError in function:\n"
                        "int printf(const char *restrict format, ...);\n"
                        "Description: Failed to output message\n");
                 return MAIN_OK_PRINTF_ERROR; // 13
@@ -593,7 +638,7 @@ int main()
         {
             if (printf("\nFind VIRUS(%s) in FILE(%s)", vs.virus_name, target_path) < 0)
             {
-                printf("Error in function:\n"
+                printf("\nError in function:\n"
                        "int printf(const char *restrict format, ...);\n"
                        "Description: Failed to output message\n");
                 return MAIN_VIRUS_PRINTF_ERROR; // 14
@@ -606,56 +651,56 @@ int main()
         {
             case SF_NULL_FILE_PATH_POINTER: // case 1
             {
-                message = "Error in variable:\n"
+                message = "\nError in variable:\n"
                           "const char *file_path;\n"
                           "Description: Scan file path pointer is NULL\n";
                 break;
             }
             case SF_NULL_VSTRUCT_POINTER: // case 2
             {
-                message = "Error in variable:\n"
+                message = "\nError in variable:\n"
                           "VirusSignature *vs;\n"
                           "Description: Virus structure pointer is NULL\n";
                 break;
             }
             case SF_NULL_VFLAG_POINTER: // case 3
             {
-                message = "Error in variable:\n"
+                message = "\nError in variable:\n"
                           "int *virus_flag;\n"
                           "Description: Virus flag pointer is NULL\n";
                 break;
             }
             case SF_FILE_FOPEN_ERROR: // case 4
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "FILE *fopen(const char *restrict pathname, const char *restrict mode);\n"
                           "Description: Failed to open scan file\n";
                 break;
             }
             case SF_OFFSET_FSEEK_ERROR: // case 5
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "int fseek(FILE *stream, long offset, int whence);\n"
                           "Description: Failed to set offset position in file\n";
                 break;
             }
             case SF_BUFFER_FREAD_ERROR: // case 6
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "size_t fread(void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream);\n"
                           "Description: Failed to read buffer from file\n";
                 break;
             }
             case SF_FILE_FCLOSE_ERROR: // case 7
             {
-                message = "Error in function:\n"
+                message = "\nError in function:\n"
                           "int fclose(FILE *stream);\n"
                           "Description: Failed to close scan file\n";
                 break;
             }
             default:
             {
-                message = "Error in function:"
+                message = "\nError in function:"
                           "int scan_file(const char *file_path, VirusSignature *vs);\n"
                           "Description: Unknown error occurred while scaninng signature\n";
                 break;
@@ -664,7 +709,7 @@ int main()
 
         if (printf("%s", message) < 0)
         {
-            printf("Error in function:\n"
+            printf("\nError in function:\n"
                    "int printf(const char *restrict format, ...);\n"
                    "Description: Failed to output message\n");
             return MAIN_SF_PRINTF_ERROR; // 9
