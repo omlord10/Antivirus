@@ -1,4 +1,5 @@
-\mainpage
+!!! This is NOT MAIN branch of my application, i delete all comments due to my сoursework !!!
+
 # 🛡️ Simple Antivirus (C Language)
 
 ## Overview
